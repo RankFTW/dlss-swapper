@@ -347,6 +347,13 @@ public partial class GameGridPageModel : ObservableObject
     }
 
     [RelayCommand]
+    async Task SelectGamesButtonAsync()
+    {
+        var batchDeployDialog = new BatchDeployDialog();
+        await batchDeployDialog.ShowAsync();
+    }
+
+    [RelayCommand]
     void ChangeGameGridView(GameGridViewType gameGridView)
     {
         if (gameGridView == this.GameGridViewType)

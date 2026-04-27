@@ -226,6 +226,11 @@
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
 
+                <AppBarButton Label="Select Games" Command="{x:Bind ViewModel.SelectGamesButtonCommand}" IsEnabled="{x:Bind ViewModel.IsLoading, Converter={StaticResource BoolNegationConverter}, Mode=OneWay}">
+                    <AppBarButton.Content>
+                        <FontIcon Glyph="&#xE762;" />
+                    </AppBarButton.Content>
+                </AppBarButton>
                 <AppBarButton Label="{x:Bind ViewModel.TranslationProperties.NewDllsText, Mode=OneWay}" Command="{x:Bind ViewModel.UnknownAssetsFoundButtonCommand}" Visibility="{x:Bind data:GameManager.Instance.UnknownAssetsFound, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" IsEnabled="{x:Bind ViewModel.IsGameListLoading, Converter={StaticResource BoolNegationConverter}, Mode=OneWay}">
                     <AppBarButton.Content>
                         <FontIcon Glyph="&#xE946;" />

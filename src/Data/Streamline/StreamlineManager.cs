@@ -302,9 +302,11 @@ internal class StreamlineManager
             using (var fileStream = File.OpenRead(zipPath))
             using (var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read))
             {
-                // Find entries under bin/x64/ that match known DLL names.
+                // Find entries under bin/x64/ that match known DLL names,
+                // excluding the development/ subfolder which contains larger debug builds.
                 var binX64Entries = zipArchive.Entries
                     .Where(e => e.FullName.Contains("bin/x64/", StringComparison.OrdinalIgnoreCase) &&
+                                !e.FullName.Contains("bin/x64/development/", StringComparison.OrdinalIgnoreCase) &&
                                 KnownStreamlineDlls.Contains(e.Name, StringComparer.OrdinalIgnoreCase))
                     .ToList();
 

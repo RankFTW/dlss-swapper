@@ -14,8 +14,19 @@ namespace DLSS_Swapper.UserControls;
 public partial class BatchDeployDialogModel : ObservableObject
 {
     WeakReference<FakeContentDialog> _dialogWeakReference;
+    List<SelectableGame> _allGames;
 
     public ObservableCollection<SelectableGame> Games { get; }
+
+    [ObservableProperty]
+    public partial bool HideHiddenGames { get; set; } = true;
+
+    partial void OnHideHiddenGamesChanged(bool value)
+    {
+        RefreshGamesList();
+    }
+
+    public string HideHiddenGamesGlyph => HideHiddenGames ? "\uED1A" : "\uE7B3";
 
     public List<DllTypePicker> DllTypePickers { get; }
 
@@ -54,18 +65,20 @@ public partial class BatchDeployDialogModel : ObservableObject
 
         // Populate games sorted alphabetically by title.
         var allGames = GameManager.Instance.GetSynchronisedGamesListCopy();
-        var sortedGames = allGames
+        _allGames = allGames
             .OrderBy(g => g.Title, StringComparer.OrdinalIgnoreCase)
             .Select(g => new SelectableGame(g))
             .ToList();
 
-        Games = new ObservableCollection<SelectableGame>(sortedGames);
+        Games = new ObservableCollection<SelectableGame>();
 
         // Subscribe to IsChecked changes on each game to update CheckedGameCount.
-        foreach (var game in Games)
+        foreach (var game in _allGames)
         {
             game.PropertyChanged += SelectableGame_PropertyChanged;
         }
+
+        RefreshGamesList();
 
         // Create 9 DllTypePicker instances, one per swappable GameAssetType.
         DllTypePickers = new List<DllTypePicker>
@@ -109,6 +122,28 @@ public partial class BatchDeployDialogModel : ObservableObject
     void UpdateCheckedGameCount()
     {
         CheckedGameCount = Games.Count(g => g.IsChecked);
+    }
+
+    void RefreshGamesList()
+    {
+        Games.Clear();
+        var filtered = HideHiddenGames
+            ? _allGames.Where(sg => sg.Game.IsHidden != true)
+            : _allGames;
+
+        foreach (var game in filtered)
+        {
+            Games.Add(game);
+        }
+
+        UpdateCheckedGameCount();
+        OnPropertyChanged(nameof(HideHiddenGamesGlyph));
+    }
+
+    [RelayCommand]
+    void ToggleHideHiddenGames()
+    {
+        HideHiddenGames = !HideHiddenGames;
     }
 
     // Stub commands — implementations will be added in tasks 3.2 and 3.3.
@@ -224,18 +259,41 @@ public partial class BatchDeployDialogModel : ObservableObject
                     {
                         if (game.HasStreamline)
                         {
-                            var slResult = await StreamlineUpdater.UpdateAsync(game);
-                            if (slResult.Success)
+                            // Skip games on Streamline 1.x — not compatible with 2.x staged DLLs.
+                            bool skipStreamline = false;
+                            if (!string.IsNullOrWhiteSpace(game.CurrentStreamlineVersion))
                             {
-                                streamlineSuccessCount++;
-                                gameHadSuccess = true;
-                            }
-                            else
-                            {
-                                result.Failures.Add(new BatchDeployResult.FailureEntry(game.Title, "Streamline", slResult.Message));
-                                if (slResult.PromptToRelaunchAsAdmin)
+                                try
                                 {
-                                    result.HasAdminRecommendation = true;
+                                    var slVer = new System.Version(game.CurrentStreamlineVersion);
+                                    if (slVer.Major < 2)
+                                    {
+                                        skipStreamline = true;
+                                        streamlineSkippedCount++;
+                                        Logger.Info($"Skipping Streamline update for {game.Title} — game is on Streamline {game.CurrentStreamlineVersion} (1.x not compatible with 2.x).");
+                                    }
+                                }
+                                catch
+                                {
+                                    // Version parse failed — proceed with update.
+                                }
+                            }
+
+                            if (!skipStreamline)
+                            {
+                                var slResult = await StreamlineUpdater.UpdateAsync(game);
+                                if (slResult.Success)
+                                {
+                                    streamlineSuccessCount++;
+                                    gameHadSuccess = true;
+                                }
+                                else
+                                {
+                                    result.Failures.Add(new BatchDeployResult.FailureEntry(game.Title, "Streamline", slResult.Message));
+                                    if (slResult.PromptToRelaunchAsAdmin)
+                                    {
+                                        result.HasAdminRecommendation = true;
+                                    }
                                 }
                             }
                         }

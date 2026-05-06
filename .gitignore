@@ -20,3 +20,7 @@ package/NSIS/FileList.nsh
 docs/_site/
 docs/.sass-cache/
 src/DLSS Swapper.net8.csproj
+
+# Publish output
+Publish/
+DLSS Swapper+/

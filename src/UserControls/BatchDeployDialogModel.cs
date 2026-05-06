@@ -195,15 +195,18 @@ public partial class BatchDeployDialogModel : ObservableObject
             var dllSuccessCounts = new Dictionary<GameAssetType, int>();
             var dllSkippedCounts = new Dictionary<GameAssetType, int>();
             var dllFailureCounts = new Dictionary<GameAssetType, int>();
+            var dllBackupPreservedCounts = new Dictionary<GameAssetType, int>();
             foreach (var picker in selectedPickers)
             {
                 dllSuccessCounts[picker.AssetType] = 0;
                 dllSkippedCounts[picker.AssetType] = 0;
                 dllFailureCounts[picker.AssetType] = 0;
+                dllBackupPreservedCounts[picker.AssetType] = 0;
             }
 
             int streamlineSuccessCount = 0;
             int streamlineSkippedCount = 0;
+            int streamlineBackupPreservedCount = 0;
 
             for (int i = 0; i < checkedGames.Count; i++)
             {
@@ -228,11 +231,19 @@ public partial class BatchDeployDialogModel : ObservableObject
                             continue;
                         }
 
+                        // Track if backup already existed (original preserved).
+                        var backupType = DLLManager.Instance.GetAssetBackupType(picker.AssetType);
+                        bool hadBackupBefore = game.GameAssets.Any(a => a.AssetType == backupType);
+
                         var updateResult = await game.UpdateDllAsync(picker.SelectedRecord!);
                         if (updateResult.Success)
                         {
                             dllSuccessCounts[picker.AssetType]++;
                             gameHadSuccess = true;
+                            if (hadBackupBefore)
+                            {
+                                dllBackupPreservedCounts[picker.AssetType]++;
+                            }
                         }
                         else
                         {
@@ -281,11 +292,18 @@ public partial class BatchDeployDialogModel : ObservableObject
 
                             if (!skipStreamline)
                             {
+                                // Track if backup already existed (original preserved).
+                                bool hadBackupBefore = game.HasStreamlineBackup;
+
                                 var slResult = await StreamlineUpdater.UpdateAsync(game);
                                 if (slResult.Success)
                                 {
                                     streamlineSuccessCount++;
                                     gameHadSuccess = true;
+                                    if (hadBackupBefore)
+                                    {
+                                        streamlineBackupPreservedCount++;
+                                    }
                                 }
                                 else
                                 {
@@ -324,11 +342,13 @@ public partial class BatchDeployDialogModel : ObservableObject
                     picker.DisplayName,
                     dllSuccessCounts[picker.AssetType],
                     dllSkippedCounts[picker.AssetType],
-                    dllFailureCounts[picker.AssetType]));
+                    dllFailureCounts[picker.AssetType],
+                    dllBackupPreservedCounts[picker.AssetType]));
             }
 
             result.StreamlineSuccessCount = streamlineSuccessCount;
             result.StreamlineSkippedCount = streamlineSkippedCount;
+            result.StreamlineBackupPreservedCount = streamlineBackupPreservedCount;
 
             // Show summary dialog.
             await ShowDeploySummaryAsync(result);
@@ -504,12 +524,22 @@ public partial class BatchDeployDialogModel : ObservableObject
 
         foreach (var dllResult in result.DllResults)
         {
-            sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"{dllResult.DisplayName}: {dllResult.SuccessCount} updated, {dllResult.SkippedCount} skipped, {dllResult.FailureCount} failed");
+            var line = $"{dllResult.DisplayName}: {dllResult.SuccessCount} updated, {dllResult.SkippedCount} skipped, {dllResult.FailureCount} failed";
+            if (dllResult.BackupPreservedCount > 0)
+            {
+                line += $" ({dllResult.BackupPreservedCount} original backup(s) preserved)";
+            }
+            sb.AppendLine(line);
         }
 
         if (IsStreamlineUpdateEnabled)
         {
-            sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"Streamline: {result.StreamlineSuccessCount} updated, {result.StreamlineSkippedCount} skipped");
+            var slLine = $"Streamline: {result.StreamlineSuccessCount} updated, {result.StreamlineSkippedCount} skipped";
+            if (result.StreamlineBackupPreservedCount > 0)
+            {
+                slLine += $" ({result.StreamlineBackupPreservedCount} original backup(s) preserved)";
+            }
+            sb.AppendLine(slLine);
         }
 
         if (result.Failures.Count > 0)

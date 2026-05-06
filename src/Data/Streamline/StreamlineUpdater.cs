@@ -50,22 +50,24 @@ internal static class StreamlineUpdater
             return (false, "No matching staged Streamline DLLs found for this game.", false);
         }
 
-        // Phase 1: Backup each existing DLL as .dlsss (overwrite existing backup per Req 7.3).
+        // Phase 1: Backup each existing DLL as .dlsss (only if no backup exists yet to preserve originals).
         var backedUpAssets = new List<(GameAsset GameAsset, string BackupPath)>();
         foreach (var (asset, _) in assetsToUpdate)
         {
             var backupPath = $"{asset.Path}.dlsss";
             try
             {
-                // Overwrite existing backup if present (Req 7.3).
-                File.Copy(asset.Path, backupPath, overwrite: true);
-
-                // Verify backup was written successfully (Req 7.4).
+                // Only create a backup if one doesn't already exist — preserves the original game files.
                 if (File.Exists(backupPath) == false)
                 {
-                    Logger.Error($"Backup verification failed for {asset.Path}.");
-                    // Roll back any already-replaced files (none replaced yet in backup phase).
-                    return (false, "Unable to update Streamline. Backup verification failed.", false);
+                    File.Copy(asset.Path, backupPath);
+
+                    // Verify backup was written successfully.
+                    if (File.Exists(backupPath) == false)
+                    {
+                        Logger.Error($"Backup verification failed for {asset.Path}.");
+                        return (false, "Unable to update Streamline. Backup verification failed.", false);
+                    }
                 }
 
                 backedUpAssets.Add((asset, backupPath));

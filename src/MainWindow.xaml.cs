@@ -259,10 +259,9 @@ public sealed partial class MainWindow : Window
         }
         */
 
-        var gitHubUpdater = new Data.GitHub.GitHubUpdater();
-
-        // If this is a GitHub build check if there is a new version.
-        var newUpdateTask = gitHubUpdater.CheckForNewGitHubRelease(false);
+        // DLSS Swapper+ — auto update check disabled (points to upstream repo).
+        // var gitHubUpdater = new Data.GitHub.GitHubUpdater();
+        // var newUpdateTask = gitHubUpdater.CheckForNewGitHubRelease(false);
 
         await DLLManager.Instance.LoadManifestsAsync();
 
@@ -376,7 +375,8 @@ public sealed partial class MainWindow : Window
         }
         */
 
-        // TODO: What happens if you have no internet
+        // DLSS Swapper+ — auto update check disabled.
+        /*
         await newUpdateTask;
         if (newUpdateTask.Result is not null)
         {
@@ -385,6 +385,7 @@ public sealed partial class MainWindow : Window
                 await gitHubUpdater.DisplayNewUpdateDialog(newUpdateTask.Result, MainNavigationView.XamlRoot);
             }
         }
+        */
     }
 
     /// <summary>

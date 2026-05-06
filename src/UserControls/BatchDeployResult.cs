@@ -5,7 +5,7 @@ namespace DLSS_Swapper.UserControls;
 
 public class BatchDeployResult
 {
-    public record DllTypeResult(GameAssetType AssetType, string DisplayName, int SuccessCount, int SkippedCount, int FailureCount);
+    public record DllTypeResult(GameAssetType AssetType, string DisplayName, int SuccessCount, int SkippedCount, int FailureCount, int BackupPreservedCount);
 
     public record FailureEntry(string GameTitle, string DllTypeName, string ErrorMessage);
 
@@ -14,6 +14,8 @@ public class BatchDeployResult
     public int StreamlineSuccessCount { get; set; }
 
     public int StreamlineSkippedCount { get; set; }
+
+    public int StreamlineBackupPreservedCount { get; set; }
 
     public List<FailureEntry> Failures { get; } = new();
 

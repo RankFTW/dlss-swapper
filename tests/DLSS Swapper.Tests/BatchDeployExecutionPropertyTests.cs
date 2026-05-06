@@ -277,7 +277,8 @@ public class BatchDeployExecutionPropertyTests
                 dllType.ToString(),
                 dllSuccessCounts[dllType],
                 dllSkippedCounts[dllType],
-                dllFailureCounts[dllType]));
+                dllFailureCounts[dllType],
+                0));
         }
 
         result.StreamlineSuccessCount = streamlineSuccessCount;

@@ -233,16 +233,6 @@
                     </Hyperlink>
                 </TextBlock>
 
-                <TextBlock>
-                    <Run Text="{x:Bind ViewModel.TranslationProperties.BuildDateText, Mode=OneWay}" FontWeight="Bold" />
-                    <Run Text="{x:Bind local:BuildInfo.BuildDateTimeFormattedString}" />
-                </TextBlock>
-                
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,12,0,0" Spacing="16" >
-                    <Button Content="{x:Bind ViewModel.TranslationProperties.CheckForUpdatesText, Mode=OneWay}" Command="{x:Bind ViewModel.CheckForUpdatesCommand}" />
-                    <ProgressRing Width="25" Height="25" IsIndeterminate="True" IsActive="{x:Bind ViewModel.IsCheckingForUpdates, Mode=OneWay}" />
-                </StackPanel>
-
                 <RichTextBlock Margin="0,24,0,0">
                     <Paragraph Margin="0,12,0,0">
                         GitHub:

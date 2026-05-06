@@ -4,6 +4,17 @@ All notable changes to DLSS Swapper+ will be documented in this file.
 
 DLSS Swapper+ is a fork of [DLSS Swapper](https://github.com/beeradmoern/dlss-swapper) v1.2.4, licensed under GPL-3.0. All original credit goes to the DLSS Swapper team and contributors.
 
+## [1.0.2] - 2026-05-06
+
+### Changed
+- App title bar now shows "DLSS Swapper+" to differentiate from upstream
+- About section in Settings now shows combined version (upstream / fork) and removed build date
+- Disabled auto update check on startup (pointed to upstream repo)
+- Removed "Check for updates" button from Settings
+
+### Fixed
+- DLSS and Streamline backups now preserve original game files — re-running a batch update no longer overwrites `.dlsss` backups, ensuring Restore always returns to the true originals. The deploy summary confirms how many backups were preserved per DLSS type.
+
 ## [1.0.1] - 2026-04-28
 
 ### Added

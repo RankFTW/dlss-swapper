@@ -25,7 +25,7 @@ public partial class SettingsPageModel : ObservableObject
     readonly WeakReference<SettingsPage> _weakPage;
     readonly DLSSSettingsManager _dlssSettingsManager;
     public string CurrentLogPath => Logger.GetCurrentLogPath();
-    public string AppVersion => App.CurrentApp.GetVersionString();
+    public string AppVersion => $"{App.CurrentApp.GetVersionString()} / 1.0.2+";
 
     [ObservableProperty]
     public partial ComboBoxOption SelectedDlssOnScreenIndicator { get; set; }

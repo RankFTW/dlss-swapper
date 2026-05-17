@@ -366,19 +366,26 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Text="Streamline" FontWeight="Bold" Grid.Column="0" Grid.Row="0" />
 
                         <TextBlock Text="{x:Bind ViewModel.StreamlineVersionDisplay, Mode=OneWay}" Grid.Column="1" Grid.Row="0" VerticalAlignment="Center" />
 
-                        <Button Content="Update Streamline" Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.UpdateStreamlineCommand}"
-                                IsEnabled="{x:Bind ViewModel.CanUpdateStreamline, Mode=OneWay}" />
+                        <ComboBox Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch"
+                                  ItemsSource="{x:Bind ViewModel.StreamlineSourceOptions, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.SelectedStreamlineSource, Mode=TwoWay}"
+                                  PlaceholderText="Select version"
+                                  IsEnabled="{x:Bind ViewModel.CanUpdateStreamline, Mode=OneWay}" />
 
                         <Button Content="Restore Streamline" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Stretch"
                                 Command="{x:Bind ViewModel.RestoreStreamlineCommand}"
                                 Visibility="{x:Bind ViewModel.Game.HasStreamlineBackup, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <Button Content="Update Streamline" Grid.Column="0" Grid.Row="2" HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.UpdateStreamlineCommand}"
+                                IsEnabled="{x:Bind ViewModel.CanUpdateStreamline, Mode=OneWay}" />
                     </Grid>
 
 

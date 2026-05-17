@@ -53,6 +53,21 @@ internal class StreamlineManager
     /// </summary>
     public bool IsStagingReady { get; private set; }
 
+    /// <summary>
+    /// Whether a custom Streamline folder exists with valid DLLs.
+    /// </summary>
+    public bool IsCustomReady { get; private set; }
+
+    /// <summary>
+    /// The version string from the custom sl.interposer.dll.
+    /// </summary>
+    public string? CustomVersion { get; private set; }
+
+    /// <summary>
+    /// The path to the custom Streamline staging folder.
+    /// </summary>
+    public string CustomStagingPath => Path.Combine(Storage.GetStreamlineStagingPath(), "Custom");
+
     private StreamlineManager()
     {
         // Check if there is an existing staging directory from a previous run.
@@ -68,6 +83,9 @@ internal class StreamlineManager
                 ReadStagedVersion();
             }
         }
+
+        // Check if a custom Streamline folder exists.
+        ReadCustomVersion();
     }
 
     /// <summary>
@@ -380,6 +398,54 @@ internal class StreamlineManager
             Logger.Error(err, "Failed to read staged Streamline version.");
             StagedVersion = null;
         }
+    }
+
+    /// <summary>
+    /// Checks the Custom folder for valid Streamline DLLs and reads the version.
+    /// </summary>
+    private void ReadCustomVersion()
+    {
+        try
+        {
+            var versionIndicatorPath = Path.Combine(CustomStagingPath, VersionIndicatorDll);
+            if (Directory.Exists(CustomStagingPath) && File.Exists(versionIndicatorPath))
+            {
+                var fileVersionInfo = FileVersionInfo.GetVersionInfo(versionIndicatorPath);
+                CustomVersion = fileVersionInfo.GetFormattedFileVersion();
+                IsCustomReady = true;
+                Logger.Info($"Custom Streamline version: {CustomVersion}");
+            }
+            else
+            {
+                CustomVersion = null;
+                IsCustomReady = false;
+            }
+        }
+        catch (Exception err)
+        {
+            Logger.Error(err, "Failed to read custom Streamline version.");
+            CustomVersion = null;
+            IsCustomReady = false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the full path to a custom staged DLL by filename, or null if not available.
+    /// </summary>
+    public string? GetCustomDllPath(string dllFileName)
+    {
+        if (IsCustomReady == false)
+        {
+            return null;
+        }
+
+        var path = Path.Combine(CustomStagingPath, dllFileName);
+        if (File.Exists(path))
+        {
+            return path;
+        }
+
+        return null;
     }
 
     /// <summary>

@@ -30,11 +30,11 @@ public partial class BatchDeployDialogModel : ObservableObject
 
     public List<DllTypePicker> DllTypePickers { get; }
 
+    public List<string> StreamlineSourceOptions { get; } = new List<string>();
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanDeploy))]
-    public partial bool IsStreamlineUpdateEnabled { get; set; }
-
-    public bool IsStreamlineAvailable => StreamlineManager.Instance.IsStagingReady;
+    public partial string? SelectedStreamlineSource { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanDeploy))]
@@ -42,7 +42,7 @@ public partial class BatchDeployDialogModel : ObservableObject
     public partial int CheckedGameCount { get; set; }
 
     public bool CanDeploy => CheckedGameCount > 0
-        && (DllTypePickers.Any(p => p.SelectedRecord != null) || IsStreamlineUpdateEnabled);
+        && (DllTypePickers.Any(p => p.SelectedRecord != null) || SelectedStreamlineSource != null);
 
     public bool CanRestore => CheckedGameCount > 0;
 
@@ -101,6 +101,16 @@ public partial class BatchDeployDialogModel : ObservableObject
         }
 
         UpdateCheckedGameCount();
+
+        // Populate Streamline source options.
+        if (StreamlineManager.Instance.IsStagingReady && !string.IsNullOrWhiteSpace(StreamlineManager.Instance.StagedVersion))
+        {
+            StreamlineSourceOptions.Add(StreamlineManager.Instance.StagedVersion);
+        }
+        if (StreamlineManager.Instance.IsCustomReady && !string.IsNullOrWhiteSpace(StreamlineManager.Instance.CustomVersion))
+        {
+            StreamlineSourceOptions.Add($"Custom ({StreamlineManager.Instance.CustomVersion})");
+        }
     }
 
     void SelectableGame_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -263,8 +273,8 @@ public partial class BatchDeployDialogModel : ObservableObject
                     }
                 }
 
-                // Process Streamline update if enabled.
-                if (IsStreamlineUpdateEnabled)
+                // Process Streamline update if a source is selected.
+                if (SelectedStreamlineSource != null)
                 {
                     try
                     {
@@ -294,8 +304,9 @@ public partial class BatchDeployDialogModel : ObservableObject
                             {
                                 // Track if backup already existed (original preserved).
                                 bool hadBackupBefore = game.HasStreamlineBackup;
+                                bool useCustom = SelectedStreamlineSource?.StartsWith("Custom", StringComparison.OrdinalIgnoreCase) == true;
 
-                                var slResult = await StreamlineUpdater.UpdateAsync(game);
+                                var slResult = await StreamlineUpdater.UpdateAsync(game, useCustom);
                                 if (slResult.Success)
                                 {
                                     streamlineSuccessCount++;
@@ -532,7 +543,7 @@ public partial class BatchDeployDialogModel : ObservableObject
             sb.AppendLine(line);
         }
 
-        if (IsStreamlineUpdateEnabled)
+        if (SelectedStreamlineSource != null)
         {
             var slLine = $"Streamline: {result.StreamlineSuccessCount} updated, {result.StreamlineSkippedCount} skipped";
             if (result.StreamlineBackupPreservedCount > 0)

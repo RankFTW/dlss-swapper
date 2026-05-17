@@ -4,6 +4,14 @@ All notable changes to DLSS Swapper+ will be documented in this file.
 
 DLSS Swapper+ is a fork of [DLSS Swapper](https://github.com/beeradmoern/dlss-swapper) v1.2.4, licensed under GPL-3.0. All original credit goes to the DLSS Swapper team and contributors.
 
+## [1.0.3] - 2026-05-15
+
+### Added
+- Custom Streamline version support — place DLLs in the `Custom` folder under the Streamline staging directory (`%LOCALAPPDATA%\DLSS Swapper\streamline\Custom`) and the app auto-detects the version
+- Streamline version picker in the individual game dialog — ComboBox replaces the static version text, showing both the release version and Custom version when available
+- Streamline version picker in the batch deploy dialog — ComboBox replaces the toggle switch, allowing selection of None / release version / Custom version for mass deployment
+- Both single-game and batch deploy use the same source selection to determine which Streamline DLLs to deploy
+
 ## [1.0.2] - 2026-05-06
 
 ### Changed

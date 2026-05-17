@@ -12,11 +12,21 @@ internal static class StreamlineUpdater
     /// Batch-updates all detected Streamline DLLs in the game with staged versions.
     /// Returns (Success, Message, PromptToRelaunchAsAdmin).
     /// </summary>
-    internal static async Task<(bool Success, string Message, bool PromptToRelaunchAsAdmin)> UpdateAsync(Game game)
+    internal static async Task<(bool Success, string Message, bool PromptToRelaunchAsAdmin)> UpdateAsync(Game game, bool useCustom = false)
     {
-        if (StreamlineManager.Instance.IsStagingReady == false)
+        if (useCustom)
         {
-            return (false, "Streamline SDK staging is not ready. Please try again later.", false);
+            if (StreamlineManager.Instance.IsCustomReady == false)
+            {
+                return (false, "Custom Streamline folder is not ready. Place DLLs in the Custom folder.", false);
+            }
+        }
+        else
+        {
+            if (StreamlineManager.Instance.IsStagingReady == false)
+            {
+                return (false, "Streamline SDK staging is not ready. Please try again later.", false);
+            }
         }
 
         // Get all Streamline game assets.
@@ -34,7 +44,9 @@ internal static class StreamlineUpdater
         foreach (var asset in streamlineAssets)
         {
             var dllFileName = Path.GetFileName(asset.Path);
-            var stagedPath = StreamlineManager.Instance.GetStagedDllPath(dllFileName);
+            var stagedPath = useCustom
+                ? StreamlineManager.Instance.GetCustomDllPath(dllFileName)
+                : StreamlineManager.Instance.GetStagedDllPath(dllFileName);
             if (stagedPath is not null)
             {
                 assetsToUpdate.Add((asset, stagedPath));

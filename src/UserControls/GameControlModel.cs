@@ -48,6 +48,11 @@ public partial class GameControlModel : ObservableObject
 
     public string StreamlineVersionDisplay { get; private set; } = "Unknown";
 
+    public List<string> StreamlineSourceOptions { get; } = new List<string>();
+
+    [ObservableProperty]
+    public partial string? SelectedStreamlineSource { get; set; }
+
     public List<PresetOption> DlssPresetOptions { get; } = new List<PresetOption>();
 
     public List<PresetOption> DlssDPresetOptions { get; } = new List<PresetOption>();
@@ -191,35 +196,29 @@ public partial class GameControlModel : ObservableObject
             ? "Unknown"
             : Game.CurrentStreamlineVersion;
 
-        // CanUpdateStreamline: true when the game has Streamline DLLs AND staging is ready,
-        // and either the game version is unknown or the staged version is newer.
-        if (Game.HasStreamline && StreamlineManager.Instance.IsStagingReady)
+        // Build source options list.
+        StreamlineSourceOptions.Clear();
+        if (StreamlineManager.Instance.IsStagingReady && !string.IsNullOrWhiteSpace(StreamlineManager.Instance.StagedVersion))
         {
-            if (string.IsNullOrWhiteSpace(Game.CurrentStreamlineVersion))
-            {
-                // Unknown game version — allow update per Req 4.4.
-                CanUpdateStreamline = true;
-            }
-            else if (string.IsNullOrWhiteSpace(StreamlineManager.Instance.StagedVersion))
-            {
-                // Staged version unknown — allow update as a fallback.
-                CanUpdateStreamline = true;
-            }
-            else
-            {
-                // Compare versions: staged > game means update is available.
-                var gameVersion = new Version(Game.CurrentStreamlineVersion);
-                var stagedVersion = new Version(StreamlineManager.Instance.StagedVersion);
-                CanUpdateStreamline = stagedVersion > gameVersion;
-            }
+            StreamlineSourceOptions.Add(StreamlineManager.Instance.StagedVersion);
         }
-        else
+        if (StreamlineManager.Instance.IsCustomReady && !string.IsNullOrWhiteSpace(StreamlineManager.Instance.CustomVersion))
         {
-            CanUpdateStreamline = false;
+            StreamlineSourceOptions.Add($"Custom ({StreamlineManager.Instance.CustomVersion})");
         }
+
+        // Auto-select the first option if available and nothing selected.
+        if (SelectedStreamlineSource == null && StreamlineSourceOptions.Count > 0)
+        {
+            SelectedStreamlineSource = StreamlineSourceOptions[0];
+        }
+
+        // CanUpdateStreamline: true when the game has Streamline DLLs AND at least one source is available.
+        CanUpdateStreamline = Game.HasStreamline && StreamlineSourceOptions.Count > 0;
 
         OnPropertyChanged(nameof(CanUpdateStreamline));
         OnPropertyChanged(nameof(StreamlineVersionDisplay));
+        OnPropertyChanged(nameof(StreamlineSourceOptions));
     }
 
     partial void OnSelectedDlssPresetChanging(PresetOption? value)
@@ -647,7 +646,8 @@ public partial class GameControlModel : ObservableObject
     [RelayCommand]
     async Task UpdateStreamlineAsync()
     {
-        var result = await StreamlineUpdater.UpdateAsync(Game);
+        bool useCustom = SelectedStreamlineSource?.StartsWith("Custom", StringComparison.OrdinalIgnoreCase) == true;
+        var result = await StreamlineUpdater.UpdateAsync(Game, useCustom);
 
         if (result.Success == false)
         {
